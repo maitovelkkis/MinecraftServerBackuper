@@ -1,0 +1,13 @@
+C:\Users\Velo\source\repos\Minecraft server backupper\bin\Release\netcoreapp3.1\Minecraft server backupper.exe
+C:\Users\Velo\source\repos\Minecraft server backupper\bin\Release\netcoreapp3.1\Minecraft server backupper.deps.json
+C:\Users\Velo\source\repos\Minecraft server backupper\bin\Release\netcoreapp3.1\Minecraft server backupper.runtimeconfig.json
+C:\Users\Velo\source\repos\Minecraft server backupper\bin\Release\netcoreapp3.1\Minecraft server backupper.runtimeconfig.dev.json
+C:\Users\Velo\source\repos\Minecraft server backupper\bin\Release\netcoreapp3.1\Minecraft server backupper.dll
+C:\Users\Velo\source\repos\Minecraft server backupper\bin\Release\netcoreapp3.1\Minecraft server backupper.pdb
+C:\Users\Velo\source\repos\Minecraft server backupper\obj\Release\netcoreapp3.1\Minecraft server backupper.csprojAssemblyReference.cache
+C:\Users\Velo\source\repos\Minecraft server backupper\obj\Release\netcoreapp3.1\Minecraft server backupper.AssemblyInfoInputs.cache
+C:\Users\Velo\source\repos\Minecraft server backupper\obj\Release\netcoreapp3.1\Minecraft server backupper.AssemblyInfo.cs
+C:\Users\Velo\source\repos\Minecraft server backupper\obj\Release\netcoreapp3.1\Minecraft server backupper.csproj.CoreCompileInputs.cache
+C:\Users\Velo\source\repos\Minecraft server backupper\obj\Release\netcoreapp3.1\Minecraft server backupper.dll
+C:\Users\Velo\source\repos\Minecraft server backupper\obj\Release\netcoreapp3.1\Minecraft server backupper.pdb
+C:\Users\Velo\source\repos\Minecraft server backupper\obj\Release\netcoreapp3.1\Minecraft server backupper.genruntimeconfig.cache

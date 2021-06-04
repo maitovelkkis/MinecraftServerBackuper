@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Minecraft server backupper": {
+      "commandName": "Project",
+      "commandLineArgs": "help"
+    }
+  }
+}
