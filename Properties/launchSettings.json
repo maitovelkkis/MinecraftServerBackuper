@@ -2,7 +2,8 @@
   "profiles": {
     "Minecraft server backupper": {
       "commandName": "Project",
-      "commandLineArgs": "help"
+      "commandLineArgs": "help",
+      "workingDirectory": "C:\\Users\\Velo\\Desktop\\mine servu 1.17"
     }
   }
 }

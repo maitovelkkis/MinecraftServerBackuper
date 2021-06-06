@@ -6,4 +6,8 @@
     <RootNamespace>Minecraft_server_backupper</RootNamespace>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <OutputPath></OutputPath>
+  </PropertyGroup>
+
 </Project>
