@@ -10,7 +10,8 @@ namespace Minecraft_server_backupper
         public bool playerActivity = false;
         public void Start(string[] args)
         {
-            using var watcher = new FileSystemWatcher(@".\world\playerdata");
+            string worldname = WorldName();
+            using var watcher = new FileSystemWatcher(@".\"+worldname+@"\playerdata");
 
             watcher.NotifyFilter = NotifyFilters.Attributes
                                  | NotifyFilters.CreationTime
@@ -24,7 +25,7 @@ namespace Minecraft_server_backupper
             watcher.Changed += OnChanged;
             watcher.Created += OnCreated;
 
-                        watcher.IncludeSubdirectories = true;
+            watcher.IncludeSubdirectories = true;
             watcher.EnableRaisingEvents = true;
 
             DateTime nextBackup = new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day, Convert.ToInt32(args[0]), Convert.ToInt32(args[1]), 0);
@@ -86,11 +87,11 @@ namespace Minecraft_server_backupper
                         }
                         Console.WriteLine("backing up");
                         System.Threading.Thread.Sleep(5000);
-                        Console.WriteLine(".\\backups\\World " + DateTime.Now.Day + "." + DateTime.Now.Month + "_" + DateTime.Now.Hour + "_" + DateTime.Now.Minute);
+                        Console.WriteLine(".\\backups\\" + worldname + "_" + DateTime.Now.ToString("yyyyMMdd_hhmm"));
                         System.Threading.Thread.Sleep(2000);
                         try
                         {
-                            DirectoryCopy("World", ".\\backups\\World " + DateTime.Now.Day + "." + DateTime.Now.Month + "_" + DateTime.Now.Hour + "_" + DateTime.Now.Minute + "\\", true);
+                            DirectoryCopy(worldname, ".\\backups\\"+worldname+"_"+ DateTime.Now.ToString("yyyyMMdd_hhmm") + "\\", true);
                         }
                         catch (Exception e)
                         {
@@ -165,6 +166,21 @@ namespace Minecraft_server_backupper
             string value = $"Created: {e.FullPath}";
             Console.WriteLine(value);
             playerActivity = true;
+        }
+        private string WorldName()
+        {
+            // Read in lines from file.
+            foreach (string line in File.ReadLines(@".\server.properties"))
+            {
+                Console.WriteLine($"{line}");
+                if (line.Split("=")[0]=="level-name")
+                {
+                    string _levelName = line.Split("=",2)[1].Replace("\\", "");
+                    Console.WriteLine(_levelName);
+                    return _levelName;
+                }
+            }
+            return null;
         }
     }
 }
