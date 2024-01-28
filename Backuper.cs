@@ -2,16 +2,25 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using System.Security.Cryptography;
 
 namespace Minecraft_server_backupper
 {
     internal class Backuper
     {
         public bool playerActivity = false;
+        public string backupFolder;
+        public MinecraftClient.MinecraftClient client;
+        public string RconPassword;
+        public string RconPort;
+        public string WorldName;
         public void Start(string[] args)
         {
-            string worldname = WorldName();
-            using var watcher = new FileSystemWatcher(@".\"+worldname+@"\playerdata");
+            WorldName = GetWorldName();
+            RconPassword = args[4];
+            RconPort = args[5];
+            backupFolder = ".\\backups\\" + WorldName + "_" + DateTime.Now.ToString("yyyyMMdd_HHmm") + "\\";
+            using var watcher = new FileSystemWatcher(@".\"+WorldName +@"\playerdata");
 
             watcher.NotifyFilter = NotifyFilters.Attributes
                                  | NotifyFilters.CreationTime
@@ -47,9 +56,6 @@ namespace Minecraft_server_backupper
             while (true)
             {
                 System.Threading.Thread.Sleep(700);
-                MinecraftClient.MinecraftClient client;
-                MinecraftClient.Message resp;
-
                 if (nextBackup.CompareTo(DateTime.Now) < 0)
                 {
                     nextBackup = nextBackup.AddHours(hourFrequency);
@@ -60,54 +66,7 @@ namespace Minecraft_server_backupper
                     }
                     else
                     {
-                        client = new MinecraftClient.MinecraftClient("localhost", Convert.ToInt32(args[5]));
-                        if (!client.Authenticate(args[4]))
-                        {
-                            Console.WriteLine("authentication failure");
-                            client.Close();
-                            return;
-                        }
-                        if (client.SendCommand("save-all", out resp))
-                        {
-                            Console.WriteLine(resp.Body);
-                        }
-                        else
-                        {
-                            Console.WriteLine("Error saving.");
-                            break;
-                        }
-                        if (client.SendCommand("save-off", out resp))
-                        {
-                            Console.WriteLine(resp.Body);
-                        }
-                        else
-                        {
-                            Console.WriteLine("Error turning saving off.");
-                            break;
-                        }
-                        Console.WriteLine("backing up");
-                        System.Threading.Thread.Sleep(5000);
-                        Console.WriteLine(".\\backups\\" + worldname + "_" + DateTime.Now.ToString("yyyyMMdd_hhmm"));
-                        System.Threading.Thread.Sleep(2000);
-                        try
-                        {
-                            DirectoryCopy(worldname, ".\\backups\\"+worldname+"_"+ DateTime.Now.ToString("yyyyMMdd_hhmm") + "\\", true);
-                        }
-                        catch (Exception e)
-                        {
-                            Console.WriteLine(e.Message);
-                        }
-                        if (client.SendCommand("save-on", out resp))
-                        {
-                            Console.WriteLine(resp.Body);
-                        }
-                        else
-                        {
-                            Console.WriteLine("Error turning saving on.");
-                            break;
-                        }
-                        playerActivity = false;
-                        client.Close();
+
                     }
                 }
             }
@@ -167,20 +126,127 @@ namespace Minecraft_server_backupper
             Console.WriteLine(value);
             playerActivity = true;
         }
-        private string WorldName()
+        private string GetWorldName()
         {
             // Read in lines from file.
             foreach (string line in File.ReadLines(@".\server.properties"))
             {
-                Console.WriteLine($"{line}");
                 if (line.Split("=")[0]=="level-name")
                 {
                     string _levelName = line.Split("=",2)[1].Replace("\\", "");
-                    Console.WriteLine(_levelName);
                     return _levelName;
                 }
             }
             return null;
+        }
+        // Process all files in the directory passed in, recurse on any directories
+        // that are found, and process the files they contain.
+        public void Backup(string targetDirectory)
+        {
+            client = new MinecraftClient.MinecraftClient("localhost", Convert.ToInt32(RconPort));
+            MinecraftClient.Message resp;
+            backupFolder = ".\\backups\\" + WorldName + "_" + DateTime.Now.ToString("yyyyMMdd_HHmm") + "\\";
+            if (!client.Authenticate(RconPassword))
+            {
+                Console.WriteLine("authentication failure");
+                client.Close();
+                return;
+            }
+            if (client.SendCommand("save-all", out resp))
+            {
+                Console.WriteLine(resp.Body);
+            }
+            else
+            {
+                Console.WriteLine("Error saving.");
+                return;
+            }
+            if (client.SendCommand("save-off", out resp))
+            {
+                Console.WriteLine(resp.Body);
+            }
+            else
+            {
+                Console.WriteLine("Error turning saving off.");
+                return;
+            }
+
+
+            Console.WriteLine("backing up");
+            Console.WriteLine(".\\backups\\" + WorldName + "_" + DateTime.Now.ToString("yyyyMMdd_HHmm"));
+
+
+            DirectoryCopy(WorldName, backupFolder, true);
+
+
+            if (client.SendCommand("save-on", out resp))
+            {
+                Console.WriteLine(resp.Body);
+            }
+            else
+            {
+                Console.WriteLine("Error turning saving on.");
+                return;
+            }
+            playerActivity = false;
+            client.Close();
+
+            Compress(backupFolder);
+
+        }
+
+        // Insert logic for processing found files here.
+        public void ProcessFile(string path)
+        {
+            using (var md5 = MD5.Create())
+            {
+                using (var stream = File.OpenRead(path))
+                {
+                    var hash = md5.ComputeHash(stream);
+                    var checksum = BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
+                    Console.WriteLine("file '{0}' checksum {1}", path, checksum);
+
+                    try
+                    {
+                        // Append the line to the text file
+                        File.AppendAllText(backupFolder + "\\filelist.txt", checksum+":"+path + Environment.NewLine);
+                        Console.WriteLine("Line added successfully.");
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"An error occurred: {ex.Message}");
+                    }
+                    if(!File.Exists($"all_files_{WorldName}\\"+checksum))
+                    {
+                        File.Copy(path, $"all_files_{WorldName}\\" + checksum);
+                    }
+                    
+                    stream.Close();
+                    if (!path.Contains("filelist.txt"))
+                        File.Delete(path);
+
+                }
+
+            }
+        }
+
+        public void Compress(string targetDirectory)
+        {
+            if (!Directory.Exists($"all_files_{WorldName}"))
+            {
+                Directory.CreateDirectory($"all_files_{WorldName}");
+            }
+            // Process the list of files found in the directory.
+            string[] fileEntries = Directory.GetFiles(targetDirectory);
+            foreach (string fileName in fileEntries)
+            {
+                ProcessFile(fileName);
+            }
+
+            // Recurse into subdirectories of this directory.
+            string[] subdirectoryEntries = Directory.GetDirectories(targetDirectory);
+            foreach (string subdirectory in subdirectoryEntries)
+                Compress(subdirectory);
         }
     }
 }
